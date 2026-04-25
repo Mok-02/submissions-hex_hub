@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIS — Satellite Intelligence System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script>
+tailwind.config={theme:{extend:{colors:{accent:'#00d4aa','accent-dim':'rgba(0,212,170,0.12)',surface:'#141414','surface-2':'#1a1a1a','surface-3':'#222222',danger:'#ef4444',warning:'#f59e0b',success:'#22c55e',info:'#3b82f6',purple:'#8b5cf6'},fontFamily:{display:['Syncopate','sans-serif'],body:['Manrope','sans-serif']}}}}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#0b0b0b}
+::-webkit-scrollbar-thumb{background:#27272a;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#00d4aa}
+body{font-family:'Manrope',sans-serif;background:#0b0b0b;color:#fff;overflow-x:hidden;min-height:100vh}
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.stars::before,.stars::after{content:'';position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;box-shadow:40px 20px 0 #ffffff33,120px 60px 0 #ffffff22,200px 100px 0 #ffffff44,280px 40px 0 #ffffff1a,350px 180px 0 #ffffff33,420px 90px 0 #ffffff22,500px 150px 0 #ffffff44,580px 30px 0 #ffffff1a,650px 200px 0 #ffffff33,730px 70px 0 #ffffff22,810px 170px 0 #ffffff44,890px 50px 0 #ffffff1a,960px 130px 0 #ffffff33,1040px 190px 0 #ffffff22,1120px 80px 0 #ffffff44,1200px 160px 0 #ffffff1a,1280px 40px 0 #ffffff33,80px 250px 0 #ffffff22,180px 300px 0 #ffffff44,300px 280px 0 #ffffff1a,400px 320px 0 #ffffff33,520px 260px 0 #ffffff22,640px 310px 0 #ffffff44,760px 290px 0 #ffffff1a,880px 330px 0 #ffffff33,1000px 270px 0 #ffffff22,1100px 340px 0 #ffffff44,1220px 300px 0 #ffffff1a,60px 400px 0 #ffffff33,160px 450px 0 #ffffff22,260px 420px 0 #ffffff44,360px 470px 0 #ffffff1a,480px 410px 0 #ffffff33,580px 460px 0 #ffffff22,700px 440px 0 #ffffff44,820px 480px 0 #ffffff1a,940px 430px 0 #ffffff33,1060px 490px 0 #ffffff22,1180px 450px 0 #ffffff44}
+.stars::after{width:1px;height:1px;box-shadow:50px 80px 0 #ffffff1a,150px 140px 0 #ffffff15,250px 200px 0 #ffffff1a,350px 120px 0 #ffffff10,450px 240px 0 #ffffff1a,550px 60px 0 #ffffff15,650px 160px 0 #ffffff1a,750px 220px 0 #ffffff10,850px 140px 0 #ffffff1a,950px 260px 0 #ffffff15,1050px 100px 0 #ffffff1a,1150px 200px 0 #ffffff10,90px 350px 0 #ffffff1a,200px 380px 0 #ffffff15,320px 360px 0 #ffffff1a,440px 400px 0 #ffffff10,560px 370px 0 #ffffff1a,680px 420px 0 #ffffff15,800px 390px 0 #ffffff1a,920px 410px 0 #ffffff10,1040px 360px 0 #ffffff1a}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,212,170,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.03) 1px,transparent 1px);background-size:60px 60px}
+.glow-accent{box-shadow:0 0 20px rgba(0,212,170,0.15),0 0 60px rgba(0,212,170,0.05)}
+@keyframes pulse-accent{0%,100%{box-shadow:0 0 0 0 rgba(0,212,170,0.4)}50%{box-shadow:0 0 0 8px rgba(0,212,170,0)}}
+.pulse-ring{animation:pulse-accent 2s ease-in-out infinite}
+@keyframes scan{0%{top:0;opacity:1}100%{top:100%;opacity:0.3}}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00d4aa,transparent);animation:scan 2s ease-in-out infinite;pointer-events:none;z-index:10}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cursor-blink::after{content:'▌';color:#00d4aa;animation:blink 0.8s step-end infinite;margin-left:2px}
+@keyframes orbit{0%{transform:rotate(0deg) translateX(28px) rotate(0deg)}100%{transform:rotate(360deg) translateX(28px) rotate(-360deg)}}
+.satellite-orbit{animation:orbit 4s linear infinite}
+@keyframes statusPulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.status-dot{animation:statusPulse 2s ease-in-out infinite}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
+.toast-in{animation:toastIn 0.4s ease-out forwards}
+.toast-out{animation:toastOut 0.3s ease-in forwards}
+.example-chip{transition:all 0.3s ease}
+.example-chip:hover{background:rgba(0,212,170,0.15);border-color:#00d4aa;transform:translateX(4px)}
+.tile-card{transition:all 0.3s ease;border:1px solid #27272a}
+.tile-card:hover{border-color:rgba(0,212,170,0.3);background:#1e1e1e}
+.conf-bar-fill{transition:width 1s ease-out 0.5s}
+.modal-overlay{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#preloader{transition:opacity 0.6s ease}
+#preloader.hide{opacity:0;pointer-events:none}
+</style>
+</head>
+<body class="font-body">
+
+<div id="preloader" class="fixed inset-0 z-[100] bg-[#0b0b0b] flex flex-col items-center justify-center gap-6">
+  <div class="relative w-16 h-16">
+    <div class="absolute inset-0 rounded-full border border-accent/20"></div>
+    <div class="absolute inset-0 rounded-full border border-accent/40 border-t-accent animate-spin"></div>
+    <div class="absolute inset-0 flex items-center justify-center">
+      <i class="fa-solid fa-satellite text-accent text-lg satellite-orbit" style="animation-duration:2s"></i>
+    </div>
+  </div>
+  <p class="font-display text-[10px] tracking-[0.3em] uppercase text-accent/60">Initializing SIS</p>
+</div>
+
+<div class="stars"></div>
+<div class="grid-bg"></div>
+
+<div id="toastContainer" class="fixed top-6 right-6 z-[90] flex flex-col gap-3 pointer-events-none"></div>
+
+<div id="app" class="relative z-10 min-h-screen flex flex-col opacity-0">
+
+  <!-- Header (no architecture button, no footer) -->
+  <header class="shrink-0 border-b border-white/5 bg-[#0b0b0b]/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="relative w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center pulse-ring">
+          <i class="fa-solid fa-satellite text-accent"></i>
+        </div>
+        <div>
+          <h1 class="font-display text-sm tracking-tight font-bold">SIS</h1>
+          <p class="text-[10px] tracking-[0.15em] uppercase text-zinc-500 font-medium">Satellite Intelligence System</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="hidden sm:flex items-center gap-2 text-xs text-zinc-500">
+          <div class="w-2 h-2 rounded-full bg-success status-dot"></div>
+          <span id="statusText">Demo Mode</span>
+        </div>
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/5 border border-accent/10">
+          <i class="fa-solid fa-database text-accent text-[10px]"></i>
+          <span class="text-[11px] text-accent font-semibold" id="tileCountBadge">60 tiles</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
+
+    <!-- Left Panel -->
+    <aside class="w-full lg:w-[380px] xl:w-[400px] shrink-0 flex flex-col gap-4">
+      <div class="bg-surface border border-white/5 rounded-xl p-4">
+        <label class="block text-[10px] tracking-[0.2em] uppercase text-zinc-500 font-semibold mb-3">Query Satellite</label>
+        <div class="relative">
+          <textarea id="queryInput" rows="3" placeholder="Ask about what the satellite sees..." class="w-full bg-surface-2 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-zinc-600 resize-none focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/20 transition-all"></textarea>
+          <button onclick="handleSend()" id="sendBtn" class="absolute bottom-3 right-3 w-8 h-8 rounded-lg bg-accent hover:bg-accent/80 flex items-center justify-center transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-arrow-up text-[#0b0b0b] text-xs font-bold"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-surface border border-white/5 rounded-xl p-4">
+        <label class="block text-[10px] tracking-[0.2em] uppercase text-zinc-500 font-semibold mb-3">Example Queries</label>
+        <div class="flex flex-col gap-2">
+          <button onclick="handleExample(this)" class="example-chip text-left px-3 py-2.5 rounded-lg bg-surface-2 border border-white/5 text-xs text-zinc-400 hover:text-white flex items-center gap-3 group">
+            <i class="fa-solid fa-water text-info text-[10px] opacity-50 group-hover:opacity-100 transition-opacity"></i>
+            <span>Is there flooding near the coast?</span>
+          </button>
+          <button onclick="handleExample(this)" class="example-chip text-left px-3 py-2.5 rounded-lg bg-surface-2 border border-white/5 text-xs text-zinc-400 hover:text-white flex items-center gap-3 group">
+            <i class="fa-solid fa-wheat-awn text-warning text-[10px] opacity-50 group-hover:opacity-100 transition-opacity"></i>
+            <span>Which areas have crop stress?</span>
+          </button>
+          <button onclick="handleExample(this)" class="example-chip text-left px-3 py-2.5 rounded-lg bg-surface-2 border border-white/5 text-xs text-zinc-400 hover:text-white flex items-center gap-3 group">
+            <i class="fa-solid fa-tree text-success text-[10px] opacity-50 group-hover:opacity-100 transition-opacity"></i>
+            <span>Show me healthy forested regions</span>
+          </button>
+          <button onclick="handleExample(this)" class="example-chip text-left px-3 py-2.5 rounded-lg bg-surface-2 border border-white/5 text-xs text-zinc-400 hover:text-white flex items-center gap-3 group">
+            <i class="fa-solid fa-city text-purple text-[10px] opacity-50 group-hover:opacity-100 transition-opacity"></i>
+            <span>Where is urban expansion happening?</span>
+          </button>
+          <button onclick="handleExample(this)" class="example-chip text-left px-3 py-2.5 rounded-lg bg-surface-2 border border-white/5 text-xs text-zinc-400 hover:text-white flex items-center gap-3 group">
+            <i class="fa-solid fa-droplet text-info text-[10px] opacity-50 group-hover:opacity-100 transition-opacity"></i>
+            <span>Are there any water bodies detected?</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-surface border border-white/5 rounded-xl p-4 flex-1 min-h-0 overflow-hidden flex flex-col">
+        <label class="block text-[10px] tracking-[0.2em] uppercase text-zinc-500 font-semibold mb-3">History</label>
+        <div id="historyList" class="flex-1 overflow-y-auto space-y-2 text-xs text-zinc-600">
+          <p class="italic text-zinc-700">No queries yet</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Panel -->
+    <section class="flex-1 min-h-0 flex flex-col gap-4">
+
+      <!-- Welcome -->
+      <div id="welcomeState" class="flex-1 flex items-center justify-center">
+        <div class="text-center max-w-md">
+          <div class="relative w-20 h-20 mx-auto mb-8">
+            <div class="absolute inset-0 rounded-full border border-accent/10"></div>
+            <div class="absolute inset-2 rounded-full border border-accent/5"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <i class="fa-solid fa-satellite text-accent/30 text-2xl satellite-orbit"></i>
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <i class="fa-solid fa-earth-americas text-accent/20 text-lg"></i>
+            </div>
+          </div>
+          <h2 class="font-display text-2xl sm:text-3xl tracking-tighter font-bold mb-4 bg-gradient-to-b from-white to-zinc-600 bg-clip-text text-transparent">Ask. Orbit Answers.</h2>
+          <p class="text-zinc-500 text-sm leading-relaxed mb-8">SIS processes satellite imagery on-orbit and downlinks only the answer — not the pixels. <span class="text-accent">99.99% bandwidth reduction.</span></p>
+          <div class="flex items-center justify-center gap-2 text-zinc-600 text-xs">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i>
+            <span>Try an example query to begin</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="loadingState" class="flex-1 hidden">
+        <div class="h-full bg-surface border border-white/5 rounded-xl p-8 relative overflow-hidden flex flex-col items-center justify-center">
+          <div class="scan-line"></div>
+          <div class="relative z-10 text-center">
+            <div class="relative w-16 h-16 mx-auto mb-6">
+              <div class="absolute inset-0 rounded-full border-2 border-accent/20 border-t-accent animate-spin"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <i class="fa-solid fa-satellite text-accent satellite-orbit" style="animation-duration:1.5s"></i>
+              </div>
+            </div>
+            <p class="font-display text-xs tracking-[0.2em] uppercase text-accent/80 mb-4" id="loadingStep">RESOLVING INTENT</p>
+            <div class="flex items-center gap-1.5 justify-center">
+              <div class="w-1.5 h-1.5 rounded-full bg-accent/60 animate-bounce" style="animation-delay:0s"></div>
+              <div class="w-1.5 h-1.5 rounded-full bg-accent/60 animate-bounce" style="animation-delay:0.15s"></div>
+              <div class="w-1.5 h-1.5 rounded-full bg-accent/60 animate-bounce" style="animation-delay:0.3s"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="resultsState" class="flex-1 hidden flex flex-col gap-4 min-h-0">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="sm:w-56 shrink-0 bg-surface border border-white/5 rounded-xl p-4">
+            <label class="block text-[10px] tracking-[0.2em] uppercase text-zinc-500 font-semibold mb-3">Detected Intent</label>
+            <div id="intentBadges" class="flex flex-wrap gap-1.5"></div>
+          </div>
+          <div class="flex-1 bg-surface border border-accent/10 rounded-xl p-5 glow-accent">
+            <label class="block text-[10px] tracking-[0.2em] uppercase text-accent/60 font-semibold mb-3">Satellite Response</label>
+            <p id="answerText" class="text-lg sm:text-xl font-semibold leading-snug"></p>
+            <p id="answerSubtext" class="text-zinc-500 text-xs mt-2 hidden"></p>
+          </div>
+        </div>
+
+        <div class="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
+          <div class="lg:w-[45%] shrink-0 bg-surface border border-white/5 rounded-xl p-4 flex flex-col">
+            <label class="block text-[10px] tracking-[0.2em] uppercase text-zinc-500 font-semibold mb-3">Detected Locations</label>
+            <div class="flex-1 min-h-[280px] relative rounded-lg overflow-hidden bg-[#0a0e14]">
+              <canvas id="tileMap" class="w-full h-full"></canvas>
+            </div>
+          </div>
+          <div class="flex-1 min-h-0 bg-surface border border-white/5 rounded-xl p-4 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <label class="block text-[10px] tracking-[0.2em] uppercase text-zinc-500 font-semibold">Matched Tiles</label>
+              <span id="tileCountLabel" class="text-[10px] text-zinc-600"></span>
+            </div>
+            <div id="tileCards" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+          </div>
+        </div>
+
+        <div class="shrink-0">
+          <div class="bg-surface border border-white/5 rounded-xl p-5 mb-4">
+            <div class="flex items-center justify-between mb-4">
+              <label class="block text-[10px] tracking-[0.2em] uppercase text-zinc-500 font-semibold">Downlink Efficiency</label>
+              <span id="bwReduction" class="font-display text-sm text-accent font-bold tracking-tight"></span>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[11px] text-zinc-500">Raw Imagery (all 60 tiles)</span>
+                  <span id="rawSizeLabel" class="text-[11px] text-zinc-400 font-mono"></span>
+                </div>
+                <div class="h-3 rounded-full bg-surface-2 overflow-hidden">
+                  <div id="rawBar" class="h-full rounded-full bg-gradient-to-r from-danger/80 to-danger/50" style="width:0%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[11px] text-zinc-500">SIS Downlink (answer only)</span>
+                  <span id="downlinkSizeLabel" class="text-[11px] text-accent font-mono font-semibold"></span>
+                </div>
+                <div class="h-3 rounded-full bg-surface-2 overflow-hidden">
+                  <div id="downlinkBar" class="h-full rounded-full bg-gradient-to-r from-accent to-accent/60" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-surface border border-white/5 rounded-xl p-4 text-center">
+              <div class="text-[10px] tracking-[0.15em] uppercase text-zinc-600 mb-2">Tiles Scanned</div>
+              <div id="statScanned" class="text-2xl font-bold text-white font-mono">—</div>
+            </div>
+            <div class="bg-surface border border-white/5 rounded-xl p-4 text-center">
+              <div class="text-[10px] tracking-[0.15em] uppercase text-zinc-600 mb-2">Matches</div>
+              <div id="statMatched" class="text-2xl font-bold text-accent font-mono">—</div>
+            </div>
+            <div class="bg-surface border border-white/5 rounded-xl p-4 text-center">
+              <div class="text-[10px] tracking-[0.15em] uppercase text-zinc-600 mb-2">Downlink</div>
+              <div id="statDownlink" class="text-2xl font-bold text-white font-mono">—</div>
+              <div class="text-[9px] text-zinc-600">bytes</div>
+            </div>
+            <div class="bg-surface border border-white/5 rounded-xl p-4 text-center">
+              <div class="text-[10px] tracking-[0.15em] uppercase text-zinc-600 mb-2">Latency</div>
+              <div id="statLatency" class="text-2xl font-bold text-white font-mono">—</div>
+              <div class="text-[9px] text-zinc-600">ms</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG — set to your Flask URL for real backend
+// ═══════════════════════════════════════════════════
+const API_BASE = 'http://localhost:5000';
+
+let queryHistory = [];
+let isProcessing = false;
+let typewriterTimer = null;
+let mapDots = [];
+let highlightedDot = -1;
+let lastMapData = null;
+
+const CLASS_COLORS = {
+  flood_risk:'#ef4444',crop_stress:'#f59e0b',healthy_vegetation:'#22c55e',
+  urban_expansion:'#8b5cf6',water_body:'#3b82f6',normal:'#a1a1aa'
+};
+const CLASS_ICONS = {
+  flood_risk:'fa-water',crop_stress:'fa-wheat-awn',healthy_vegetation:'fa-tree',
+  urban_expansion:'fa-city',water_body:'fa-droplet',normal:'fa-circle-check'
+};
+const LAND_COLORS = {
+  agriculture:'#f59e0b',urban:'#8b5cf6',water:'#3b82f6',forest:'#22c55e',barren:'#a1a1aa'
+};
+const INTENT_LABELS = {
+  crop_stress:'Crop Stress',water_shortage:'Water Shortage',vegetation_health:'Vegetation Health',
+  water_abundance:'Water Abundance',urban_expansion:'Urban Expansion',deforestation:'Deforestation',
+  flood_risk:'Flood Risk',fire_risk:'Fire Risk',agriculture:'Agriculture',
+  urban:'Urban',water_body:'Water Body',forest:'Forest',barren:'Barren'
+};
+
+// ═══════════════════════════════════════════════════
+// MOCK DATA
+// ═══════════════════════════════════════════════════
+const MOCK_REGIONS = [
+  {region:"Southern France",lat:43.30,lon:5.37},{region:"Northern Italy",lat:45.46,lon:9.19},
+  {region:"Central Spain",lat:40.42,lon:-3.70},{region:"Eastern Germany",lat:52.52,lon:13.41},
+  {region:"Western Poland",lat:52.23,lon:21.01},{region:"Swiss Plateau",lat:46.95,lon:7.45},
+  {region:"Benelux Coast",lat:51.22,lon:4.42},{region:"Southern England",lat:51.51,lon:-0.13},
+  {region:"Eastern Spain",lat:39.47,lon:-0.38},{region:"Northern Greece",lat:40.64,lon:22.94},
+  {region:"Austrian Lowlands",lat:48.21,lon:16.37},{region:"Western Turkey",lat:39.93,lon:32.86},
+  {region:"Portuguese Coast",lat:38.72,lon:-9.14},{region:"Irish Midlands",lat:53.35,lon:-6.26},
+  {region:"Czech Basin",lat:50.08,lon:14.44},{region:"Southern Sweden",lat:55.60,lon:13.00},
+  {region:"Romanian Plain",lat:44.43,lon:26.10},{region:"Western Ukraine",lat:49.84,lon:24.03},
+  {region:"Sicilian Coast",lat:37.50,lon:15.09},{region:"Bavarian Alps",lat:47.72,lon:11.40}
+];
+
+function seededRandom(seed){let s=seed;return function(){s=(s*16807)%2147483647;return(s-1)/2147483646}}
+
+function generateMockResponse(question){
+  const q=question.toLowerCase();
+  let targetClass='normal',intents=[],landFilter=null;
+  if(q.includes('flood')||q.includes('inundat')||q.includes('waterlog')){targetClass='flood_risk';intents=['flood_risk','water_abundance'];landFilter='water'}
+  else if(q.includes('crop stress')||q.includes('plant stress')||q.includes('stressed crop')||q.includes('dying')||q.includes('wilting')){targetClass='crop_stress';intents=['crop_stress','agriculture'];landFilter='agriculture'}
+  else if(q.includes('healthy')||q.includes('green cover')||q.includes('dense vegetation')||q.includes('lush')||(q.includes('forest')&&!q.includes('deforest'))){targetClass='healthy_vegetation';intents=['vegetation_health','forest'];landFilter='forest'}
+  else if(q.includes('urban expansion')||q.includes('urban growth')||q.includes('urbanization')){targetClass='urban_expansion';intents=['urban_expansion','urban'];landFilter='urban'}
+  else if(q.includes('water body')||q.includes('river')||q.includes('lake')||q.includes('reservoir')||q.includes('water detected')){targetClass='water_body';intents=['water_body'];landFilter='water'}
+  else if(q.includes('urban')||q.includes('city')||q.includes('built-up')){targetClass='urban_expansion';intents=['urban','urban_expansion'];landFilter='urban'}
+  else if(q.includes('agriculture')||q.includes('farm')||q.includes('crop')||q.includes('field')){targetClass='crop_stress';intents=['agriculture','crop_stress'];landFilter='agriculture'}
+  else if(q.includes('drought')||q.includes('dry')||q.includes('water shortage')||q.includes('arid')){targetClass='crop_stress';intents=['water_shortage','crop_stress'];landFilter='agriculture'}
+  else if(q.includes('deforest')||q.includes('forest loss')){targetClass='crop_stress';intents=['deforestation','forest'];landFilter='barren'}
+
+  const rng=seededRandom(question.split('').reduce((a,c)=>a+c.charCodeAt(0),0));
+  const numMatches=targetClass==='normal'?60:Math.floor(rng()*8)+3;
+  const shuffled=[...MOCK_REGIONS].sort(()=>rng()-0.5);
+  const landTypes=['agriculture','urban','water','forest','barren'];
+  const matchedTiles=[];
+  for(let i=0;i<numMatches;i++){
+    const base=shuffled[i%shuffled.length];
+    const land=landFilter||landTypes[Math.floor(rng()*landTypes.length)];
+    let ndvi,water;
+    switch(targetClass){
+      case'flood_risk':ndvi=0.1+rng()*0.2;water=0.6+rng()*0.35;break;
+      case'crop_stress':ndvi=0.08+rng()*0.2;water=0.05+rng()*0.25;break;
+      case'healthy_vegetation':ndvi=0.6+rng()*0.35;water=0.3+rng()*0.4;break;
+      case'urban_expansion':ndvi=0.1+rng()*0.25;water=0.05+rng()*0.15;break;
+      case'water_body':ndvi=0.05+rng()*0.15;water=0.75+rng()*0.25;break;
+      default:ndvi=0.2+rng()*0.5;water=0.1+rng()*0.5;
+    }
+    let conf;
+    switch(targetClass){
+      case'flood_risk':conf=0.7+water*0.3;break;
+      case'crop_stress':conf=0.6+(0.35-ndvi);break;
+      case'healthy_vegetation':conf=0.5+ndvi*0.5;break;
+      case'water_body':conf=0.6+water*0.35;break;
+      default:conf=0.6+rng()*0.3;
+    }
+    conf=Math.min(0.99,Math.max(0.45,conf));
+    matchedTiles.push({
+      tile_id:`TILE_${String(i+1).padStart(4,'0')}`,
+      lat:base.lat+(rng()-0.5)*3,lon:base.lon+(rng()-0.5)*4,
+      region:base.region,land_type:land,
+      ndvi:Math.round(ndvi*100)/100,water:Math.round(water*100)/100,
+      class:targetClass,confidence:Math.round(conf*100)/100
+    });
+  }
+  matchedTiles.sort((a,b)=>b.confidence-a.confidence);
+  const templates={
+    flood_risk:`⚠️  FLOOD RISK detected in ${numMatches} tile(s).`,
+    crop_stress:`🌾 CROP STRESS detected in ${numMatches} tile(s).`,
+    healthy_vegetation:`🌿 HEALTHY VEGETATION confirmed in ${numMatches} tile(s).`,
+    urban_expansion:`🏙️  URBAN EXPANSION detected in ${numMatches} tile(s).`,
+    water_body:`💧 WATER BODIES identified in ${numMatches} tile(s).`,
+    normal:`✅  No anomalies detected across ${numMatches} tile(s).`
+  };
+  const intentSummary=intents.length?'Detected: '+intents.map(i=>INTENT_LABELS[i]||i).join(', '):'No specific intent detected — general similarity search.';
+  const downlink={question,answer:templates[targetClass],target_class:targetClass,tiles_matched:numMatches,
+    locations:matchedTiles.slice(0,5).map(t=>({lat:t.lat,lon:t.lon,region:t.region,conf:t.confidence}))};
+  const downlinkBytes=Math.round(JSON.stringify(downlink).length*1.1);
+  const totalTiles=60,rawMB=totalTiles*700,latency=Math.round((15+rng()*60)*10)/10;
+  return{
+    question,intent_summary:intentSummary,answer:templates[targetClass],
+    matched_tiles:matchedTiles,downlink,
+    meta:{total_tiles:totalTiles,tiles_matched:numMatches,downlink_bytes:downlinkBytes,
+      raw_imagery_mb:rawMB,bandwidth_reduction:(1-downlinkBytes/(rawMB*1024*1024))*100,latency_ms:latency}
+  };
+}
+
+// ═══════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════
+async function querySatellite(question){
+  if(API_BASE){
+    const res=await fetch(`${API_BASE}/ask`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});
+    if(!res.ok)throw new Error(`API error: ${res.status}`);
+    return res.json();
+  }
+  await new Promise(r=>setTimeout(r,1800+Math.random()*1200));
+  return generateMockResponse(question);
+}
+
+// ═══════════════════════════════════════════════════
+// UI
+// ═══════════════════════════════════════════════════
+function showState(s){
+  document.getElementById('welcomeState').classList.toggle('hidden',s!=='welcome');
+  document.getElementById('loadingState').classList.toggle('hidden',s!=='loading');
+  document.getElementById('resultsState').classList.toggle('hidden',s!=='results');
+}
+
+const LOADING_STEPS=['RESOLVING INTENT','EMBEDDING QUERY','SCANNING 60 TILES','SCORING RESULTS','GENERATING ANSWER'];
+let stepIndex=0,stepTimer=null;
+function startLoadingAnimation(){stepIndex=0;updateLoadingStep();stepTimer=setInterval(()=>{stepIndex++;if(stepIndex<LOADING_STEPS.length)updateLoadingStep()},500)}
+function stopLoadingAnimation(){clearInterval(stepTimer)}
+function updateLoadingStep(){const el=document.getElementById('loadingStep');gsap.to(el,{opacity:0,y:-8,duration:0.15,onComplete:()=>{el.textContent=LOADING_STEPS[stepIndex];gsap.to(el,{opacity:1,y:0,duration:0.2})}})}
+
+function typeWriter(element,text,speed=25){
+  return new Promise(resolve=>{
+    if(typewriterTimer)clearInterval(typewriterTimer);
+    element.textContent='';element.classList.add('cursor-blink');
+    let i=0;
+    typewriterTimer=setInterval(()=>{element.textContent+=text[i];i++;if(i>=text.length){clearInterval(typewriterTimer);typewriterTimer=null;setTimeout(()=>element.classList.remove('cursor-blink'),800);resolve()}},speed);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// TILE MAP — improved visibility
+// ═══════════════════════════════════════════════════
+function drawTileMap(tiles,totalTiles){
+  const canvas=document.getElementById('tileMap');
+  const rect=canvas.parentElement.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+  canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const W=rect.width,H=rect.height;
+
+  // Dark blue-black background (like satellite view at night)
+  ctx.fillStyle='#0a0e14';
+  ctx.fillRect(0,0,W,H);
+
+  // Subtle grid
+  ctx.strokeStyle='rgba(0,212,170,0.04)';
+  ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+
+  // Find actual bounds from tiles
+  let minLat=90,maxLat=-90,minLon=180,maxLon=-180;
+  tiles.forEach(t=>{
+    if(t.lat<minLat)minLat=t.lat;if(t.lat>maxLat)maxLat=t.lat;
+    if(t.lon<minLon)minLon=t.lon;if(t.lon>maxLon)maxLon=t.lon;
+  });
+  // Add padding
+  const padLat=Math.max((maxLat-minLat)*0.25,2);
+  const padLon=Math.max((maxLon-minLon)*0.25,2);
+  minLat-=padLat;maxLat+=padLat;minLon-=padLon;maxLon+=padLon;
+
+  const toX=lon=>((lon-minLon)/(maxLon-minLon))*(W-60)+30;
+  const toY=lat=>((maxLat-lat)/(maxLat-minLat))*(H-50)+25;
+
+  // Axis labels
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.font='9px Manrope';
+  ctx.textAlign='left';
+  ctx.fillText(maxLat.toFixed(1)+'°N',4,toY(maxLat)+3);
+  ctx.fillText(minLat.toFixed(1)+'°N',4,toY(minLat)+3);
+  ctx.textAlign='right';
+  ctx.fillText(minLon.toFixed(1)+'°',W-4,H-4);
+  ctx.textAlign='left';
+  ctx.fillText(maxLon.toFixed(1)+'°',4,H-4);
+
+  // Dim background scatter for non-matched tiles
+  const rng=seededRandom(42);
+  for(let i=0;i<totalTiles;i++){
+    const lat=minLat+rng()*(maxLat-minLat);
+    const lon=minLon+rng()*(maxLon-minLon);
+    ctx.beginPath();ctx.arc(toX(lon),toY(lat),1.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill();
+  }
+
+  // Draw matched tiles — BIG, bright, glowing
+  mapDots=[];
+  const show=tiles.slice(0,10);
+  show.forEach((tile,i)=>{
+    const x=toX(tile.lon),y=toY(tile.lat);
+    const color=CLASS_COLORS[tile.class]||'#a1a1aa';
+    const r=5+tile.confidence*5;
+    mapDots.push({x,y,color,r});
+
+    // Outer glow
+    const grad=ctx.createRadialGradient(x,y,0,x,y,r*4);
+    grad.addColorStop(0,color+'50');
+    grad.addColorStop(0.4,color+'18');
+    grad.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(x,y,r*4,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
+
+    // Ring
+    ctx.beginPath();ctx.arc(x,y,r+3,0,Math.PI*2);
+    ctx.strokeStyle=color+'35';ctx.lineWidth=1.5;ctx.stroke();
+
+    // Main dot
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=color;ctx.fill();
+
+    // Inner bright core
+    ctx.beginPath();ctx.arc(x,y,r*0.4,0,Math.PI*2);
+    ctx.fillStyle='#ffffff90';ctx.fill();
+
+    // Label
+    if(i<6){
+      ctx.fillStyle='rgba(255,255,255,0.6)';
+      ctx.font='bold 9px Manrope';
+      ctx.textAlign='left';
+      ctx.fillText(tile.region,x+r+6,y+3);
+    }
+  });
+
+  // Draw connecting lines between nearby dots (creates a network feel)
+  ctx.strokeStyle='rgba(0,212,170,0.06)';
+  ctx.lineWidth=0.5;
+  for(let i=0;i<mapDots.length;i++){
+    for(let j=i+1;j<mapDots.length;j++){
+      const dx=mapDots[i].x-mapDots[j].x,dy=mapDots[i].y-mapDots[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<150){
+        ctx.beginPath();ctx.moveTo(mapDots[i].x,mapDots[i].y);ctx.lineTo(mapDots[j].x,mapDots[j].y);ctx.stroke();
+      }
+    }
+  }
+
+  lastMapData={tiles,totalTiles,minLat,maxLat,minLon,maxLon};
+}
+
+function redrawMapHighlight(){
+  if(!lastMapData||mapDots.length===0)return;
+  const canvas=document.getElementById('tileMap');
+  // Full redraw to properly clear highlights
+  drawTileMap(lastMapData.tiles,lastMapData.totalTiles);
+  if(highlightedDot>=0&&highlightedDot<mapDots.length){
+    const ctx=canvas.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
+    const dot=mapDots[highlightedDot];
+    // Big highlight ring
+    ctx.beginPath();ctx.arc(dot.x,dot.y,dot.r*5,0,Math.PI*2);
+    ctx.strokeStyle=dot.color+'90';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+    // Extra glow
+    const grad=ctx.createRadialGradient(dot.x,dot.y,0,dot.x,dot.y,dot.r*6);
+    grad.addColorStop(0,dot.color+'40');grad.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(dot.x,dot.y,dot.r*6,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
+    ctx.restore();
+  }
+}
+
+function highlightMapDot(i){highlightedDot=i;redrawMapHighlight()}
+function resetMapDots(){highlightedDot=-1;redrawMapHighlight()}
+
+// ═══════════════════════════════════════════════════
+// RENDER RESULTS
+// ═══════════════════════════════════════════════════
+async function renderResults(data){
+  // Intent badges
+  const badgesEl=document.getElementById('intentBadges');
+  badgesEl.innerHTML='';
+  const activeIntents=data.intent_summary.replace('Detected: ','').split(', ').filter(Boolean);
+  if(activeIntents.length&&!data.intent_summary.includes('No specific')){
+    activeIntents.forEach((intent,i)=>{
+      const badge=document.createElement('span');
+      const key=Object.entries(INTENT_LABELS).find(([k,v])=>v===intent);
+      const color=key?CLASS_COLORS[key[0]]||'#a1a1aa':'#a1a1aa';
+      badge.className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold';
+      badge.style.cssText=`background:${color}15;color:${color};border:1px solid ${color}30;opacity:0`;
+      badge.innerHTML=`<span class="w-1.5 h-1.5 rounded-full" style="background:${color}"></span>${intent}`;
+      badgesEl.appendChild(badge);
+      gsap.to(badge,{opacity:1,y:0,duration:0.3,delay:i*0.08});
+    });
+  }else{badgesEl.innerHTML='<span class="text-[11px] text-zinc-600 italic">General search</span>'}
+
+  await typeWriter(document.getElementById('answerText'),data.answer,30);
+
+  const subtext=document.getElementById('answerSubtext');
+  if(data.matched_tiles.length>0){
+    subtext.textContent=`Top match: ${data.matched_tiles[0].region} (${data.matched_tiles[0].confidence} confidence)`;
+    subtext.classList.remove('hidden');
+  }
+
+  drawTileMap(data.matched_tiles,data.meta.total_tiles);
+
+  const cardsEl=document.getElementById('tileCards');
+  cardsEl.innerHTML='';
+  const showTiles=data.matched_tiles.slice(0,10);
+  document.getElementById('tileCountLabel').textContent=`Showing ${showTiles.length} of ${data.matched_tiles.length}`;
+
+  showTiles.forEach((tile,i)=>{
+    const card=document.createElement('div');
+    card.className='tile-card rounded-lg p-3 bg-surface-2 cursor-pointer';
+    card.style.opacity='0';
+    card.innerHTML=`
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded flex items-center justify-center text-[10px]" style="background:${CLASS_COLORS[tile.class]}15;color:${CLASS_COLORS[tile.class]}">
+            <i class="fa-solid ${CLASS_ICONS[tile.class]}"></i>
+          </span>
+          <span class="text-xs font-semibold text-zinc-300">${tile.region}</span>
+        </div>
+        <span class="text-[10px] font-mono text-zinc-600">${tile.tile_id}</span>
+      </div>
+      <div class="flex items-center gap-4 text-[10px] text-zinc-500 mb-2.5">
+        <span><i class="fa-solid fa-location-dot mr-1" style="color:${CLASS_COLORS[tile.class]}60"></i>${tile.lat.toFixed(3)}°, ${tile.lon.toFixed(3)}°</span>
+        <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider" style="background:${LAND_COLORS[tile.land_type]||'#a1a1aa'}15;color:${LAND_COLORS[tile.land_type]||'#a1a1aa'}">${tile.land_type}</span>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[9px] text-zinc-600 uppercase tracking-wider">Confidence</span>
+            <span class="text-[10px] font-mono font-semibold" style="color:${CLASS_COLORS[tile.class]}">${tile.confidence}</span>
+          </div>
+          <div class="h-1.5 rounded-full bg-surface-3 overflow-hidden">
+            <div class="conf-bar-fill h-full rounded-full" style="width:0%;background:${CLASS_COLORS[tile.class]}" data-target="${tile.confidence*100}"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[9px] text-zinc-600 uppercase tracking-wider">NDVI</span>
+            <span class="text-[10px] font-mono font-semibold" style="color:${tile.ndvi>0.5?'#22c55e':tile.ndvi<0.25?'#ef4444':'#f59e0b'}">${tile.ndvi}</span>
+          </div>
+          <div class="h-1.5 rounded-full bg-surface-3 overflow-hidden">
+            <div class="conf-bar-fill h-full rounded-full" style="width:0%;background:${tile.ndvi>0.5?'#22c55e':tile.ndvi<0.25?'#ef4444':'#f59e0b'}" data-target="${tile.ndvi*100}"></div>
+          </div>
+        </div>
+      </div>`;
+    card.addEventListener('mouseenter',()=>highlightMapDot(i));
+    card.addEventListener('mouseleave',()=>resetMapDots());
+    cardsEl.appendChild(card);
+    gsap.to(card,{opacity:1,y:0,duration:0.35,delay:0.1+i*0.06});
+  });
+
+  setTimeout(()=>{document.querySelectorAll('.conf-bar-fill').forEach(bar=>{bar.style.width=bar.dataset.target+'%'})},300);
+
+  // Bandwidth — handle string or number
+  const rawMB=data.meta.raw_imagery_mb;
+  const dlBytes=data.meta.downlink_bytes;
+  const reduction=typeof data.meta.bandwidth_reduction==='string'?parseFloat(data.meta.bandwidth_reduction):data.meta.bandwidth_reduction;
+  const dlKB=(dlBytes/1024).toFixed(2);
+
+  document.getElementById('bwReduction').textContent=reduction.toFixed(4)+'% saved';
+  document.getElementById('rawSizeLabel').textContent=rawMB>=1000?(rawMB/1000).toFixed(1)+' GB':rawMB+' MB';
+  document.getElementById('downlinkSizeLabel').textContent=dlKB+' KB';
+
+  gsap.to('#rawBar',{width:'100%',duration:1,ease:'power2.out',delay:0.2});
+  gsap.to('#downlinkBar',{width:Math.max(0.8,(dlBytes/(rawMB*1024*1024))*100)+'%',duration:1.5,ease:'power4.out',delay:0.5});
+
+  animateCounter('statScanned',data.meta.total_tiles);
+  animateCounter('statMatched',data.meta.tiles_matched);
+  animateCounter('statDownlink',dlBytes,0);
+  animateCounter('statLatency',data.meta.latency_ms,1);
+}
+
+function animateCounter(id,target,decimals=0){
+  const el=document.getElementById(id);
+  gsap.fromTo(el,{textContent:0},{textContent:target,duration:1,ease:'power2.out',delay:0.3,
+    snap:decimals===0?{textContent:1}:{},
+    onUpdate:function(){if(decimals===0)el.textContent=Math.round(parseFloat(el.textContent));else el.textContent=parseFloat(el.textContent).toFixed(decimals)}
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════
+function addToHistory(q,a){queryHistory.unshift({question:q,answer:a,time:new Date()});if(queryHistory.length>20)queryHistory.pop();renderHistory()}
+function renderHistory(){
+  const el=document.getElementById('historyList');
+  if(!queryHistory.length){el.innerHTML='<p class="italic text-zinc-700">No queries yet</p>';return}
+  el.innerHTML=queryHistory.map((h,i)=>`<button onclick="rerunQuery(${i})" class="w-full text-left p-2 rounded-lg hover:bg-surface-2 transition-colors group"><p class="text-zinc-400 group-hover:text-zinc-200 transition-colors truncate">${h.question}</p><p class="text-zinc-700 text-[10px] mt-0.5 truncate">${h.answer}</p></button>`).join('');
+}
+function rerunQuery(i){document.getElementById('queryInput').value=queryHistory[i].question;handleSend()}
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+function showToast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const colors={info:'#3b82f6',success:'#22c55e',error:'#ef4444',warning:'#f59e0b'};
+  const icons={info:'fa-circle-info',success:'fa-circle-check',error:'fa-circle-xmark',warning:'fa-triangle-exclamation'};
+  const t=document.createElement('div');
+  t.className='toast-in pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border text-sm';
+  t.style.cssText=`background:#141414;border-color:${colors[type]}30;box-shadow:0 4px 20px rgba(0,0,0,0.4)`;
+  t.innerHTML=`<i class="fa-solid ${icons[type]}" style="color:${colors[type]}"></i><span class="text-zinc-300 text-xs">${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.classList.replace('toast-in','toast-out');setTimeout(()=>t.remove(),300)},3500);
+}
+
+// ═══════════════════════════════════════════════════
+// HANDLERS
+// ═══════════════════════════════════════════════════
+async function handleSend(){
+  const input=document.getElementById('queryInput');
+  const question=input.value.trim();
+  if(!question||isProcessing)return;
+  isProcessing=true;document.getElementById('sendBtn').disabled=true;input.value='';
+  showState('loading');startLoadingAnimation();
+  try{
+    const data=await querySatellite(question);
+    stopLoadingAnimation();showState('results');
+    await renderResults(data);addToHistory(question,data.answer);
+    showToast(`Processed in ${data.meta.latency_ms}ms — ${data.meta.tiles_matched} tiles matched`,'success');
+  }catch(err){
+    stopLoadingAnimation();showState('welcome');
+    showToast('Error: '+err.message,'error');console.error(err);
+  }
+  isProcessing=false;document.getElementById('sendBtn').disabled=false;
+}
+
+function handleExample(btn){
+  document.getElementById('queryInput').value=btn.querySelector('span').textContent;
+  handleSend();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('queryInput').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}
+  });
+  let resizeTimer;
+  window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(lastMapData&&!document.getElementById('resultsState').classList.contains('hidden'))drawTileMap(lastMapData.tiles,lastMapData.totalTiles)},250)});
+});
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('load',()=>{
+  setTimeout(()=>{document.getElementById('preloader').classList.add('hide');setTimeout(()=>document.getElementById('preloader').style.display='none',600)},1200);
+  gsap.to('#app',{opacity:1,duration:0.6,delay:0.8,ease:'power2.out'});
+  if(API_BASE){document.getElementById('statusText').textContent='Connected';document.querySelector('.status-dot').style.background='#22c55e'}
+});
+</script>
+</body>
+</html>
