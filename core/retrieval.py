@@ -1,3 +1,15 @@
+"""
+retrieval.py — Retrieval + Scoring Engine
+
+For each tile in the database:
+  1. Compute cosine similarity between query embedding and tile embedding
+  2. Compute rule-based metadata scores (NDVI thresholds, water flags, etc.)
+  3. Fuse scores with configurable weights
+  4. Return top-K ranked results
+
+Rule weights and thresholds are all externalized — easy to tune without touching logic.
+"""
+
 import numpy as np
 from core.embeddings import cosine_similarity
 from typing import Optional
@@ -6,8 +18,8 @@ RULE_WEIGHTS = {
     "similarity":      0.45,
     "ndvi_stress":     0.15,
     "water_shortage":  0.15,
-    "land_type_match": 0.20,  
-    "ndvi_health":     0.05,  
+    "land_type_match": 0.20,  # increased from 0.10
+    "ndvi_health":     0.05,  # new signal for healthy vegetation
 }
 
 NDVI_STRESS_THRESHOLD = 0.35
@@ -26,21 +38,25 @@ def _rule_score(intent: dict, metadata: dict) -> dict:
     water = metadata.get("water_presence", 0.5)
     land = metadata.get("land_type", "unknown")
 
+    # Crop stress: reward low NDVI
     if intent.get("crop_stress"):
         scores["ndvi_stress"] = max(0.0, 1.0 - ndvi / NDVI_STRESS_THRESHOLD) if ndvi < NDVI_STRESS_THRESHOLD else 0.0
     else:
         scores["ndvi_stress"] = 0.0
 
+    # Water shortage: reward low water
     if intent.get("water_shortage"):
         scores["water_shortage"] = max(0.0, 1.0 - water / WATER_LOW_THRESHOLD) if water < WATER_LOW_THRESHOLD else 0.0
     else:
         scores["water_shortage"] = 0.0
 
+    # Vegetation health: reward high NDVI
     if intent.get("vegetation_health"):
         scores["ndvi_health"] = max(0.0, (ndvi - NDVI_HEALTH_THRESHOLD) / (1.0 - NDVI_HEALTH_THRESHOLD)) if ndvi > NDVI_HEALTH_THRESHOLD else 0.0
     else:
         scores["ndvi_health"] = 0.0
 
+    # Land type match
     land_intent_map = {
         "agriculture": ["agriculture"],
         "urban":       ["urban"],
@@ -55,13 +71,15 @@ def _rule_score(intent: dict, metadata: dict) -> dict:
             break
     scores["land_type_match"] = land_match
 
+# Penalize wrong land type for agriculture queries
     if intent.get("crop_stress") or intent.get("agriculture"):
         if land in ["water"]:
-            scores["ndvi_stress"] = 0.0  
- 
+            scores["ndvi_stress"] = 0.0  # water's negative NDVI is not crop stress
+
+    # Penalize wrong land type for water shortage queries  
     if intent.get("water_shortage"):
         if land in ["water"]:
-            scores["water_shortage"] = 0.0  
+            scores["water_shortage"] = 0.0  # water bodies don't have water shortage
 
     return scores
 
@@ -72,7 +90,10 @@ def score_tile(
     intent: dict,
     metadata: dict,
 ) -> dict:
-
+    """
+    Full scoring pipeline for a single tile.
+    Returns score breakdown for explanation layer.
+    """
     sim = (cosine_similarity(query_embedding, tile_embedding) + 1.0) / 2.0  # normalize [-1,1] → [0,1]
     rules = _rule_score(intent, metadata)
 
